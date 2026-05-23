@@ -853,47 +853,96 @@ body::before {
   top: 60px;
   right: 16px;
   width: 280px;
-  background: rgba(7,10,15,0.95);
+  background: rgba(7,10,15,0.97);
   border: 1px solid var(--gaming);
-  box-shadow: 0 0 30px rgba(255,60,0,0.3);
-  z-index: 9999;
+  box-shadow: 0 0 30px rgba(255,60,0,0.4), 0 0 80px rgba(255,60,0,0.08);
+  z-index: 999999;
   display: none;
   flex-direction: column;
   border-radius: 4px;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  overflow: hidden;
+  transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
 }
 
 #gaming-overlay.active { display: flex; }
 
+#gaming-overlay.minimized {
+  width: 54px !important;
+  height: 54px !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 20px rgba(255,60,0,0.8);
+  cursor: pointer;
+}
+
+#gaming-overlay.minimized .overlay-body,
+#gaming-overlay.minimized .overlay-footer { display: none !important; }
+
+#gaming-overlay.minimized .overlay-header {
+  height: 54px;
+  padding: 0;
+  justify-content: center;
+  border-bottom: none;
+  cursor: pointer;
+}
+
+#gaming-overlay.minimized .overlay-title,
+#gaming-overlay.minimized .overlay-drag-hint { display: none; }
+
+#gaming-overlay.minimized #overlay-star-icon { display: flex !important; }
+
+#overlay-star-icon {
+  display: none;
+  font-size: 24px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  pointer-events: none;
+  animation: starPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes starPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(255,149,0,0.9)); }
+  50% { transform: scale(1.25); filter: drop-shadow(0 0 14px rgba(255,60,0,1)); }
+}
+
 .overlay-header {
   background: linear-gradient(135deg, rgba(255,60,0,0.2), rgba(255,149,0,0.1));
   border-bottom: 1px solid rgba(255,60,0,0.3);
-  padding: 8px 12px;
+  padding: 8px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: grab;
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .overlay-header:active { cursor: grabbing; }
 
 .overlay-title {
   font-family: 'Share Tech Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 3px;
+  font-size: 10px;
+  letter-spacing: 2px;
   color: var(--gaming);
   text-transform: uppercase;
 }
 
-.overlay-drag-hint {
-  font-size: 10px;
-  color: var(--text2);
+.overlay-drag-hint { font-size: 10px; color: var(--text2); }
+
+.overlay-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .overlay-messages {
-  height: 180px;
+  height: 160px;
   overflow-y: auto;
-  padding: 10px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -915,12 +964,46 @@ body::before {
 }
 
 .overlay-msg.mine .sender { color: var(--gaming2); }
-
 .overlay-msg .text { color: var(--text); }
+
+.ptt-btn {
+  background: rgba(255,60,0,0.1);
+  border-top: 1px solid rgba(255,60,0,0.3);
+  border-bottom: 1px solid rgba(255,60,0,0.3);
+  border-left: none; border-right: none;
+  color: var(--gaming);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  width: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ptt-btn.talking {
+  background: var(--gaming);
+  color: white;
+  box-shadow: 0 0 16px rgba(255,60,0,0.6);
+  animation: pttPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes pttPulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(255,60,0,0.4); }
+  50% { box-shadow: 0 0 32px rgba(255,60,0,0.8); }
+}
 
 .overlay-input-bar {
   border-top: 1px solid rgba(255,60,0,0.2);
-  padding: 8px;
+  padding: 7px 8px;
   display: flex;
   gap: 6px;
   align-items: center;
@@ -936,6 +1019,7 @@ body::before {
   padding: 6px 10px;
   outline: none;
   border-radius: 2px;
+  min-width: 0;
 }
 
 .overlay-input:focus { border-color: var(--gaming); }
@@ -946,7 +1030,7 @@ body::before {
   color: white;
   width: 30px; height: 30px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -954,39 +1038,31 @@ body::before {
   flex-shrink: 0;
 }
 
-.ptt-btn {
-  width: 100%;
-  padding: 10px;
-  background: rgba(255,60,0,0.1);
-  border: 1px solid rgba(255,60,0,0.3);
-  color: var(--gaming);
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
+/* FOOTER — HIDE / CLOSE */
+.overlay-footer {
+  display: flex;
+  border-top: 1px solid rgba(255,60,0,0.2);
+  flex-shrink: 0;
+}
+
+.overlay-footer-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text2);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
   letter-spacing: 2px;
   text-transform: uppercase;
+  padding: 9px 0;
   cursor: pointer;
-  transition: all 0.1s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: 6px;
-  width: calc(100% - 12px);
-  border-radius: 2px;
+  transition: all 0.2s;
 }
 
-.ptt-btn.talking {
-  background: var(--gaming);
-  color: white;
-  box-shadow: 0 0 16px rgba(255,60,0,0.6);
-  animation: pttPulse 0.5s ease-in-out infinite;
-}
-
-@keyframes pttPulse {
-  0%, 100% { box-shadow: 0 0 16px rgba(255,60,0,0.4); }
-  50% { box-shadow: 0 0 32px rgba(255,60,0,0.8); }
-}
+.overlay-footer-btn:first-child { border-right: 1px solid rgba(255,60,0,0.2); }
+.overlay-footer-btn:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.overlay-footer-btn.hide-btn:hover { color: var(--gaming2); }
+.overlay-footer-btn.close-btn:hover { background: rgba(255,60,0,0.15); color: var(--danger); }
 
 /* ─── JOIN SCREEN ─── */
 #screen-join {
@@ -1330,20 +1406,32 @@ body::before {
      GAMING OVERLAY (draggable)
 ══════════════════════════════════════════ -->
 <div id="gaming-overlay">
-  <div class="overlay-header" id="overlay-handle">
+  <!-- HEADER / drag handle — also acts as star tap when minimized -->
+  <div class="overlay-header" id="overlay-handle" onclick="handleOverlayHeaderClick()">
     <span class="overlay-title">⬡ NEXUS OVERLAY</span>
     <span class="overlay-drag-hint">⠿ drag</span>
+    <span id="overlay-star-icon">⭐</span>
   </div>
-  <div class="overlay-messages" id="overlay-messages"></div>
-  <button class="ptt-btn" id="ptt-btn"
-    onmousedown="startPTT()" onmouseup="stopPTT()"
-    ontouchstart="startPTT()" ontouchend="stopPTT()">
-    🎙️ HOLD TO TALK
-  </button>
-  <div class="overlay-input-bar">
-    <input class="overlay-input" id="overlay-input" placeholder="Type a message..."
-      onkeydown="handleOverlayKey(event)">
-    <button class="overlay-send" onclick="sendOverlayMessage()">➤</button>
+
+  <!-- BODY (hidden when minimized) -->
+  <div class="overlay-body">
+    <div class="overlay-messages" id="overlay-messages"></div>
+    <button class="ptt-btn" id="ptt-btn"
+      onmousedown="startPTT()" onmouseup="stopPTT()"
+      ontouchstart="startPTT(event)" ontouchend="stopPTT(event)">
+      🎙️ HOLD TO TALK
+    </button>
+    <div class="overlay-input-bar">
+      <input class="overlay-input" id="overlay-input" placeholder="Type a message..."
+        onkeydown="handleOverlayKey(event)">
+      <button class="overlay-send" onclick="sendOverlayMessage()">➤</button>
+    </div>
+  </div>
+
+  <!-- FOOTER — HIDE / CLOSE -->
+  <div class="overlay-footer">
+    <button class="overlay-footer-btn hide-btn" onclick="hideOverlay()">⬡ HIDE</button>
+    <button class="overlay-footer-btn close-btn" onclick="closeOverlay()">✕ CLOSE</button>
   </div>
 </div>
 
@@ -1797,11 +1885,46 @@ async function startGamingOverlay() {
 }
 
 function openGamingOverlay() {
-  goTo('screen-home'); // minimize behind
-  document.getElementById('screen-home').style.display = 'none';
-  document.getElementById('gaming-overlay').classList.add('active');
+  // Hide all screens — overlay floats on top of whatever is behind it
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  // Make body transparent/dark so overlay truly floats
+  document.body.style.background = 'transparent';
+
+  const overlay = document.getElementById('gaming-overlay');
+  overlay.classList.add('active');
+  overlay.classList.remove('minimized');
   listenOverlayChat();
   makeDraggable();
+}
+
+function hideOverlay() {
+  // Shrink to star bubble
+  const overlay = document.getElementById('gaming-overlay');
+  overlay.classList.add('minimized');
+}
+
+function closeOverlay() {
+  // Totally close — remove from view
+  const overlay = document.getElementById('gaming-overlay');
+  overlay.classList.remove('active');
+  overlay.classList.remove('minimized');
+  // Restore body background
+  document.body.style.background = '';
+  // Show home screen
+  document.querySelectorAll('.screen').forEach(s => s.style.display = '');
+  goTo('screen-home');
+}
+
+function handleOverlayHeaderClick() {
+  // Only restore when minimized (star click)
+  const overlay = document.getElementById('gaming-overlay');
+  if (overlay.classList.contains('minimized')) {
+    overlay.classList.remove('minimized');
+  }
+  // When not minimized, header is used for dragging — click does nothing
 }
 
 function listenOverlayChat() {
