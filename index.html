@@ -890,15 +890,10 @@ body::before {
 #gaming-overlay.minimized .overlay-title,
 #gaming-overlay.minimized .overlay-drag-hint { display: none; }
 
-#gaming-overlay.minimized #overlay-star-icon { display: flex !important; }
+/* Star button: hidden normally, flex when minimized */
+#gaming-overlay.minimized #overlay-star-btn { display: flex !important; }
 
-#overlay-star-icon {
-  display: none;
-  font-size: 24px;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  pointer-events: none;
+#overlay-star-btn {
   animation: starPulse 1.5s ease-in-out infinite;
 }
 
@@ -1406,12 +1401,26 @@ body::before {
      GAMING OVERLAY (draggable)
 ══════════════════════════════════════════ -->
 <div id="gaming-overlay">
-  <!-- HEADER / drag handle — also acts as star tap when minimized -->
-  <div class="overlay-header" id="overlay-handle" onclick="handleOverlayHeaderClick()">
+  <!-- HEADER / drag handle -->
+  <div class="overlay-header" id="overlay-handle">
     <span class="overlay-title">⬡ NEXUS OVERLAY</span>
     <span class="overlay-drag-hint">⠿ drag</span>
-    <span id="overlay-star-icon">⭐</span>
   </div>
+  <!-- STAR BUTTON — separate element, only visible when minimized, no drag conflict -->
+  <button id="overlay-star-btn" onclick="restoreOverlay()" style="
+    display:none;
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    background:transparent;
+    border:none;
+    cursor:pointer;
+    z-index:10;
+    align-items:center;
+    justify-content:center;
+    font-size:26px;
+  ">⭐</button>
 
   <!-- BODY (hidden when minimized) -->
   <div class="overlay-body">
@@ -1918,13 +1927,10 @@ function closeOverlay() {
   goTo('screen-home');
 }
 
-function handleOverlayHeaderClick() {
-  // Only restore when minimized (star click)
+function restoreOverlay() {
   const overlay = document.getElementById('gaming-overlay');
-  if (overlay.classList.contains('minimized')) {
-    overlay.classList.remove('minimized');
-  }
-  // When not minimized, header is used for dragging — click does nothing
+  overlay.classList.remove('minimized');
+  // star btn hides itself via CSS when not minimized
 }
 
 function listenOverlayChat() {
