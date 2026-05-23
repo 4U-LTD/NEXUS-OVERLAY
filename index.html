@@ -1,0 +1,1974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>NEXUS — Chat & Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import { getDatabase, ref, set, push, onValue, get, update, onDisconnect, remove }
+  from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDuZ-Nlbxr7Uu-Oych3_t0_gjZFJWvNOMc",
+  authDomain: "quizz-taka.firebaseapp.com",
+  databaseURL: "https://quizz-taka-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "quizz-taka",
+  storageBucket: "quizz-taka.firebasestorage.app",
+  messagingSenderId: "79162719267",
+  appId: "1:79162719267:web:dd0839de6683d7c7058596",
+  measurementId: "G-WWE8WXTVSK"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+window._db = db;
+window._dbFns = { ref, set, push, onValue, get, update, onDisconnect, remove };
+window._firebaseReady = true;
+window.dispatchEvent(new Event('firebase-ready'));
+</script>
+
+<style>
+:root {
+  --bg: #070a0f;
+  --surface: #0d1117;
+  --surface2: #111820;
+  --border: #1e2d3d;
+  --accent: #00d4ff;
+  --accent2: #7b2fff;
+  --gaming: #ff3c00;
+  --gaming2: #ff9500;
+  --text: #e2eaf4;
+  --text2: #6b8099;
+  --success: #00ff88;
+  --danger: #ff4444;
+  --glow: 0 0 20px rgba(0,212,255,0.3);
+  --glow-gaming: 0 0 20px rgba(255,60,0,0.4);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Exo 2', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── NOISE + GRID BACKGROUND ─── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── SCREENS ─── */
+.screen {
+  display: none;
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  animation: fadeIn 0.4s ease;
+}
+.screen.active { display: flex; flex-direction: column; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── HOME SCREEN ─── */
+#screen-home {
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.logo-block {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.logo-text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(52px, 14vw, 96px);
+  font-weight: 700;
+  letter-spacing: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(0,212,255,0.4)); }
+  50% { filter: drop-shadow(0 0 24px rgba(0,212,255,0.8)); }
+}
+
+.logo-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 6px;
+  color: var(--text2);
+  margin-top: 8px;
+}
+
+.btn-host {
+  background: transparent;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  padding: 18px 56px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+  text-transform: uppercase;
+}
+
+.btn-host::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: -1;
+}
+
+.btn-host:hover::before { transform: translateX(0); }
+.btn-host:hover { color: var(--bg); box-shadow: var(--glow); }
+.btn-host:active { transform: scale(0.97); }
+
+/* ─── MODE SELECT ─── */
+#screen-mode {
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 20px;
+}
+
+.mode-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  color: var(--text2);
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.mode-cards {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 700px;
+}
+
+.mode-card {
+  flex: 1;
+  min-width: 240px;
+  max-width: 320px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 36px 28px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.mode-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  transform: scaleX(0);
+  transition: transform 0.3s;
+}
+
+.mode-card.normal::after { background: var(--accent); }
+.mode-card.gaming::after { background: var(--gaming); }
+
+.mode-card:hover { border-color: transparent; transform: translateY(-4px); }
+.mode-card.normal:hover { box-shadow: 0 8px 40px rgba(0,212,255,0.2); }
+.mode-card.gaming:hover { box-shadow: 0 8px 40px rgba(255,60,0,0.2); }
+.mode-card:hover::after { transform: scaleX(1); }
+
+.mode-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.mode-card.gaming .mode-icon { animation-delay: 0.5s; }
+
+.mode-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.mode-card.normal .mode-name { color: var(--accent); }
+.mode-card.gaming .mode-name { color: var(--gaming); }
+
+.mode-desc {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+}
+
+/* ─── SETUP SCREEN ─── */
+#screen-setup {
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.setup-box {
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 40px;
+}
+
+.setup-header {
+  margin-bottom: 32px;
+}
+
+.setup-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  padding: 4px 12px;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.setup-badge.normal { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+.setup-badge.gaming { background: rgba(255,60,0,0.1); color: var(--gaming); border: 1px solid rgba(255,60,0,0.3); }
+
+.setup-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.field-group {
+  margin-bottom: 24px;
+}
+
+.field-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--text2);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.field-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Exo 2', sans-serif;
+  font-size: 15px;
+  padding: 12px 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.field-input:focus { border-color: var(--accent); }
+
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.field-number {
+  width: 80px;
+  text-align: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.num-btn {
+  width: 40px; height: 40px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.num-btn:hover { background: var(--border); }
+
+.perm-list {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.perm-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 13px;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+}
+
+.perm-item:last-child { border-bottom: none; }
+
+.perm-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text2);
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.perm-item.granted .perm-dot { background: var(--success); }
+.perm-item.denied .perm-dot { background: var(--danger); }
+
+.btn-primary {
+  width: 100%;
+  background: transparent;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  padding: 16px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary.normal {
+  border: 2px solid var(--accent);
+  color: var(--accent);
+}
+
+.btn-primary.normal:hover {
+  background: var(--accent);
+  color: var(--bg);
+  box-shadow: var(--glow);
+}
+
+.btn-primary.gaming {
+  border: 2px solid var(--gaming);
+  color: var(--gaming);
+}
+
+.btn-primary.gaming:hover {
+  background: var(--gaming);
+  color: var(--bg);
+  box-shadow: var(--glow-gaming);
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  margin-bottom: 24px;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.btn-back:hover { color: var(--text); }
+
+/* ─── LOBBY SCREEN ─── */
+#screen-lobby {
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.lobby-box {
+  width: 100%;
+  max-width: 520px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 32px;
+}
+
+.lobby-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.lobby-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 3px;
+}
+
+.member-count-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  color: var(--text2);
+}
+
+.link-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.link-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-copy {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-copy:hover { border-color: var(--accent); color: var(--accent); }
+
+.member-list {
+  min-height: 120px;
+  margin-bottom: 24px;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  animation: memberIn 0.3s ease;
+}
+
+@keyframes memberIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.member-avatar {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.member-name {
+  font-size: 15px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.member-tag {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text2);
+}
+
+.member-tag.admin { color: var(--accent); }
+
+.waiting-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: var(--text2);
+  letter-spacing: 2px;
+  text-align: center;
+  padding: 20px;
+  animation: blink 2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* ─── CHAT SCREEN ─── */
+#screen-chat {
+  height: 100vh;
+  display: none;
+  flex-direction: column;
+}
+
+#screen-chat.active { display: flex; }
+
+.chat-topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.chat-avatar {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.chat-info { flex: 1; }
+
+.chat-room-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.chat-status {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--success);
+  letter-spacing: 1px;
+}
+
+.call-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.call-btn {
+  width: 38px; height: 38px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border-radius: 2px;
+}
+
+.call-btn:hover { border-color: var(--accent); color: var(--accent); }
+.call-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.call-btn.danger { background: var(--danger); color: white; border-color: var(--danger); }
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-track { background: transparent; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--border); }
+
+.msg-group {
+  display: flex;
+  flex-direction: column;
+  max-width: 75%;
+  animation: msgIn 0.2s ease;
+}
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg-group.mine { align-self: flex-end; }
+.msg-group.theirs { align-self: flex-start; }
+
+.msg-sender {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  margin-bottom: 4px;
+  padding-left: 2px;
+}
+
+.msg-group.mine .msg-sender { text-align: right; color: var(--accent2); }
+
+.msg-bubble {
+  padding: 10px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  position: relative;
+}
+
+.msg-group.mine .msg-bubble {
+  background: linear-gradient(135deg, var(--accent2), #5a1fc2);
+  color: white;
+  border-radius: 12px 12px 2px 12px;
+}
+
+.msg-group.theirs .msg-bubble {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 12px 12px 12px 2px;
+}
+
+.msg-time {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--text2);
+  margin-top: 4px;
+  padding: 0 2px;
+}
+
+.msg-group.mine .msg-time { text-align: right; }
+
+.system-msg {
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--text2);
+  letter-spacing: 1px;
+  padding: 8px;
+}
+
+.chat-inputbar {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.chat-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Exo 2', sans-serif;
+  font-size: 15px;
+  padding: 10px 14px;
+  outline: none;
+  resize: none;
+  min-height: 42px;
+  max-height: 120px;
+  border-radius: 2px;
+  transition: border-color 0.2s;
+  line-height: 1.4;
+}
+
+.chat-input:focus { border-color: var(--accent); }
+
+.send-btn {
+  width: 42px; height: 42px;
+  background: var(--accent);
+  border: none;
+  color: var(--bg);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.send-btn:hover { background: #00b8d9; }
+.send-btn:active { transform: scale(0.95); }
+
+/* ─── VIDEO OVERLAY ─── */
+#video-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+}
+
+#video-overlay.active { display: flex; }
+
+.video-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 4px;
+  padding: 8px;
+  overflow-y: auto;
+}
+
+.video-tile {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  aspect-ratio: 4/3;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.video-tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-tile-name {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: rgba(0,0,0,0.7);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  padding: 2px 8px;
+  letter-spacing: 1px;
+}
+
+.video-no-cam {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.video-no-cam-avatar {
+  width: 56px; height: 56px;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.video-controls {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.vid-btn {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.vid-btn:hover { border-color: var(--accent); color: var(--accent); }
+.vid-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.vid-btn.end { background: var(--danger); border-color: var(--danger); color: white; }
+
+/* ─── GAMING OVERLAY ─── */
+#gaming-overlay {
+  position: fixed;
+  top: 60px;
+  right: 16px;
+  width: 280px;
+  background: rgba(7,10,15,0.95);
+  border: 1px solid var(--gaming);
+  box-shadow: 0 0 30px rgba(255,60,0,0.3);
+  z-index: 9999;
+  display: none;
+  flex-direction: column;
+  border-radius: 4px;
+  backdrop-filter: blur(10px);
+}
+
+#gaming-overlay.active { display: flex; }
+
+.overlay-header {
+  background: linear-gradient(135deg, rgba(255,60,0,0.2), rgba(255,149,0,0.1));
+  border-bottom: 1px solid rgba(255,60,0,0.3);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: grab;
+}
+
+.overlay-header:active { cursor: grabbing; }
+
+.overlay-title {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--gaming);
+  text-transform: uppercase;
+}
+
+.overlay-drag-hint {
+  font-size: 10px;
+  color: var(--text2);
+}
+
+.overlay-messages {
+  height: 180px;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.overlay-messages::-webkit-scrollbar { width: 3px; }
+.overlay-messages::-webkit-scrollbar-thumb { background: rgba(255,60,0,0.3); }
+
+.overlay-msg {
+  font-size: 12px;
+  line-height: 1.4;
+  animation: msgIn 0.2s ease;
+}
+
+.overlay-msg .sender {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--gaming);
+}
+
+.overlay-msg.mine .sender { color: var(--gaming2); }
+
+.overlay-msg .text { color: var(--text); }
+
+.overlay-input-bar {
+  border-top: 1px solid rgba(255,60,0,0.2);
+  padding: 8px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.overlay-input {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,60,0,0.2);
+  color: var(--text);
+  font-family: 'Exo 2', sans-serif;
+  font-size: 12px;
+  padding: 6px 10px;
+  outline: none;
+  border-radius: 2px;
+}
+
+.overlay-input:focus { border-color: var(--gaming); }
+
+.overlay-send {
+  background: var(--gaming);
+  border: none;
+  color: white;
+  width: 30px; height: 30px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.ptt-btn {
+  width: 100%;
+  padding: 10px;
+  background: rgba(255,60,0,0.1);
+  border: 1px solid rgba(255,60,0,0.3);
+  color: var(--gaming);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 6px;
+  width: calc(100% - 12px);
+  border-radius: 2px;
+}
+
+.ptt-btn.talking {
+  background: var(--gaming);
+  color: white;
+  box-shadow: 0 0 16px rgba(255,60,0,0.6);
+  animation: pttPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes pttPulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(255,60,0,0.4); }
+  50% { box-shadow: 0 0 32px rgba(255,60,0,0.8); }
+}
+
+/* ─── JOIN SCREEN ─── */
+#screen-join {
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.join-box {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 36px;
+  text-align: center;
+}
+
+.join-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.join-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  margin-bottom: 8px;
+}
+
+.join-room-info {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: var(--text2);
+  margin-bottom: 28px;
+  letter-spacing: 1px;
+}
+
+/* ─── NOTIFICATIONS ─── */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  padding: 10px 20px;
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+  border-radius: 2px;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ─── LOADER ─── */
+.loader {
+  display: inline-block;
+  width: 20px; height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── GAMING WAITING SCREEN ─── */
+#screen-gaming-lobby {
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.gaming-lobby-box {
+  width: 100%;
+  max-width: 500px;
+  background: var(--surface);
+  border: 1px solid rgba(255,60,0,0.3);
+  box-shadow: 0 0 30px rgba(255,60,0,0.1);
+  padding: 36px;
+}
+
+.gaming-lobby-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--gaming);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+/* scrollbar global */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); }
+
+/* util */
+.hidden { display: none !important; }
+.mt16 { margin-top: 16px; }
+.mt8 { margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 1: HOME
+══════════════════════════════════════════ -->
+<div id="screen-home" class="screen active">
+  <div class="logo-block">
+    <div class="logo-text">NEXUS</div>
+    <div class="logo-sub">CONNECT — COMMUNICATE — CONQUER</div>
+  </div>
+  <button class="btn-host" onclick="goTo('screen-mode')">
+    ⬡ HOST A SERVER
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 2: MODE SELECT
+══════════════════════════════════════════ -->
+<div id="screen-mode" class="screen">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;">
+    <div class="mode-title">SELECT MODE</div>
+    <div class="mode-cards">
+
+      <div class="mode-card normal" onclick="selectMode('normal')">
+        <span class="mode-icon">💬</span>
+        <div class="mode-name">Normal Chat</div>
+        <div class="mode-desc">Full chat experience with text, voice calls, and video calls. Camera and microphone supported.</div>
+      </div>
+
+      <div class="mode-card gaming" onclick="selectMode('gaming')">
+        <span class="mode-icon">🎮</span>
+        <div class="mode-name">Gaming Chat</div>
+        <div class="mode-desc">Floating overlay with push-to-talk mic and live chat. Built for games that lack communication.</div>
+      </div>
+
+    </div>
+    <button class="btn-back mt16" onclick="goTo('screen-home')">← BACK</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 3: SETUP (Admin)
+══════════════════════════════════════════ -->
+<div id="screen-setup" class="screen">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;">
+    <div class="setup-box">
+      <button class="btn-back" onclick="goTo('screen-mode')">← BACK</button>
+      <div class="setup-header">
+        <span class="setup-badge" id="setup-badge">NORMAL</span>
+        <div class="setup-title" id="setup-title">Create Server</div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Your Name</label>
+        <input class="field-input" id="admin-name" placeholder="Enter your name..." maxlength="24">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Server Name</label>
+        <input class="field-input" id="server-name" placeholder="Give your server a name..." maxlength="32">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Max Members (1–15)</label>
+        <div class="field-row">
+          <button class="num-btn" onclick="changeMemberCount(-1)">−</button>
+          <input class="field-input field-number" id="member-limit" value="5" readonly>
+          <button class="num-btn" onclick="changeMemberCount(1)">+</button>
+        </div>
+      </div>
+
+      <div class="perm-list" id="perm-list">
+        <div class="perm-item" id="perm-mic">
+          <div class="perm-dot"></div>
+          <span>Microphone</span>
+        </div>
+        <div class="perm-item hidden" id="perm-cam">
+          <div class="perm-dot"></div>
+          <span>Camera</span>
+        </div>
+        <div class="perm-item" id="perm-overlay">
+          <div class="perm-dot"></div>
+          <span>Overlay / Screen (via App)</span>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="setup-submit-btn" onclick="requestPermsAndCreate()">
+        REQUEST PERMISSIONS &amp; CREATE
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 4A: NORMAL LOBBY
+══════════════════════════════════════════ -->
+<div id="screen-lobby" class="screen">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;">
+    <div class="lobby-box">
+      <div class="lobby-header">
+        <div class="lobby-title" id="lobby-server-name">SERVER</div>
+        <div class="member-count-badge" id="lobby-member-badge">0 / 5</div>
+      </div>
+
+      <div class="link-box">
+        <div class="link-text" id="lobby-link">Generating link...</div>
+        <button class="btn-copy" onclick="copyLink()">COPY</button>
+      </div>
+
+      <div class="member-list" id="lobby-member-list">
+        <div class="waiting-text" id="lobby-waiting">WAITING FOR MEMBERS...</div>
+      </div>
+
+      <button class="btn-primary normal" id="start-chat-btn" onclick="startChat()">
+        LETS CHAT
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 4B: GAMING LOBBY
+══════════════════════════════════════════ -->
+<div id="screen-gaming-lobby" class="screen">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;">
+    <div class="gaming-lobby-box">
+      <div class="gaming-lobby-title">GAME SERVER</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text2);margin-bottom:24px;letter-spacing:1px;" id="gaming-lobby-name">—</div>
+
+      <div class="link-box" style="border-color:rgba(255,60,0,0.3)">
+        <div class="link-text" style="color:var(--gaming)" id="gaming-lobby-link">Generating link...</div>
+        <button class="btn-copy" onclick="copyLink(true)">COPY</button>
+      </div>
+
+      <div class="member-list" id="gaming-member-list">
+        <div class="waiting-text" id="gaming-waiting">WAITING FOR PLAYERS...</div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text2);">PLAYERS</span>
+        <span class="member-count-badge" id="gaming-member-badge">0 / 5</span>
+      </div>
+
+      <button class="btn-primary gaming" onclick="startGamingOverlay()">
+        START OVERLAY
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 5: JOIN (Member view)
+══════════════════════════════════════════ -->
+<div id="screen-join" class="screen">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;">
+    <div class="join-box">
+      <span class="join-icon" id="join-icon">💬</span>
+      <div class="join-title" id="join-title">JOIN SERVER</div>
+      <div class="join-room-info" id="join-room-info">Loading...</div>
+
+      <div class="field-group" style="text-align:left;">
+        <label class="field-label">Your Name</label>
+        <input class="field-input" id="join-name" placeholder="Enter your name..." maxlength="24">
+      </div>
+
+      <div class="perm-list" id="join-perm-list" style="margin-bottom:24px;">
+        <div class="perm-item" id="join-perm-mic">
+          <div class="perm-dot"></div>
+          <span>Microphone</span>
+        </div>
+        <div class="perm-item hidden" id="join-perm-cam">
+          <div class="perm-dot"></div>
+          <span>Camera</span>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="join-btn" onclick="joinRoom()">
+        JOIN SERVER
+      </button>
+
+      <div id="join-status" style="margin-top:16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text2);text-align:center;letter-spacing:2px;min-height:20px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 6: CHAT (Normal Mode)
+══════════════════════════════════════════ -->
+<div id="screen-chat" class="screen">
+  <div class="chat-topbar">
+    <div class="chat-avatar" id="chat-avatar-icon">N</div>
+    <div class="chat-info">
+      <div class="chat-room-name" id="chat-room-name">SERVER</div>
+      <div class="chat-status" id="chat-online-status">● ONLINE</div>
+    </div>
+    <div class="call-btns">
+      <button class="call-btn" id="btn-voice-call" onclick="toggleVoiceCall()" title="Voice Call">🎙️</button>
+      <button class="call-btn" id="btn-video-call" onclick="openVideoCall()" title="Video Call">📹</button>
+    </div>
+  </div>
+
+  <div class="chat-messages" id="chat-messages"></div>
+
+  <div class="chat-inputbar">
+    <textarea class="chat-input" id="chat-input" placeholder="Type a message..." rows="1"
+      onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" onclick="sendMessage()">➤</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     VIDEO CALL OVERLAY
+══════════════════════════════════════════ -->
+<div id="video-overlay">
+  <div class="video-grid" id="video-grid"></div>
+  <div class="video-controls">
+    <button class="vid-btn" id="vid-mic-btn" onclick="toggleVideoMic()" title="Mic">🎙️</button>
+    <button class="vid-btn" id="vid-cam-btn" onclick="toggleVideoCam()" title="Camera">📹</button>
+    <button class="vid-btn end" onclick="endVideoCall()" title="End">📵</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     GAMING OVERLAY (draggable)
+══════════════════════════════════════════ -->
+<div id="gaming-overlay">
+  <div class="overlay-header" id="overlay-handle">
+    <span class="overlay-title">⬡ NEXUS OVERLAY</span>
+    <span class="overlay-drag-hint">⠿ drag</span>
+  </div>
+  <div class="overlay-messages" id="overlay-messages"></div>
+  <button class="ptt-btn" id="ptt-btn"
+    onmousedown="startPTT()" onmouseup="stopPTT()"
+    ontouchstart="startPTT()" ontouchend="stopPTT()">
+    🎙️ HOLD TO TALK
+  </button>
+  <div class="overlay-input-bar">
+    <input class="overlay-input" id="overlay-input" placeholder="Type a message..."
+      onkeydown="handleOverlayKey(event)">
+    <button class="overlay-send" onclick="sendOverlayMessage()">➤</button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     MAIN SCRIPT
+══════════════════════════════════════════ -->
+<script>
+// ── State ──────────────────────────────────
+let state = {
+  mode: null,          // 'normal' | 'gaming'
+  isAdmin: false,
+  roomId: null,
+  myName: null,
+  myKey: null,
+  serverName: null,
+  memberLimit: 5,
+  started: false,
+  members: {},
+  micStream: null,
+  camStream: null,
+  micActive: false,
+  camActive: false,
+  voiceCallActive: false,
+  peers: {},           // WebRTC peer connections
+};
+
+let db, dbFns;
+
+// ── Firebase init ──────────────────────────
+function initFirebase() {
+  if (window._firebaseReady) {
+    db = window._db;
+    dbFns = window._dbFns;
+    checkURLRoom();
+  } else {
+    window.addEventListener('firebase-ready', () => {
+      db = window._db;
+      dbFns = window._dbFns;
+      checkURLRoom();
+    });
+  }
+}
+
+// ── URL / Join detection ───────────────────
+function checkURLRoom() {
+  const params = new URLSearchParams(location.search);
+  const roomId = params.get('room');
+  if (roomId) {
+    state.roomId = roomId;
+    loadRoomForJoin(roomId);
+  }
+}
+
+async function loadRoomForJoin(roomId) {
+  const { ref, get } = dbFns;
+  try {
+    const snap = await get(ref(db, `rooms/${roomId}`));
+    if (!snap.exists()) {
+      toast('Room not found or expired');
+      goTo('screen-home');
+      return;
+    }
+    const room = snap.val();
+    if (room.started) {
+      toast('Session already started — cannot join');
+      return;
+    }
+    state.serverName = room.serverName;
+    state.mode = room.mode;
+    state.memberLimit = room.memberLimit;
+
+    document.getElementById('join-icon').textContent = room.mode === 'gaming' ? '🎮' : '💬';
+    document.getElementById('join-title').textContent = room.mode === 'gaming' ? 'JOIN GAME SERVER' : 'JOIN SERVER';
+    document.getElementById('join-room-info').textContent = `${room.serverName} · Max ${room.memberLimit} members`;
+
+    const joinBtn = document.getElementById('join-btn');
+    joinBtn.className = `btn-primary ${room.mode}`;
+
+    if (room.mode === 'gaming') {
+      document.getElementById('join-perm-cam').classList.add('hidden');
+    } else {
+      document.getElementById('join-perm-cam').classList.remove('hidden');
+    }
+
+    goTo('screen-join');
+  } catch(e) {
+    toast('Failed to load room');
+  }
+}
+
+// ── Screen navigation ──────────────────────
+function goTo(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ── Mode select ────────────────────────────
+function selectMode(mode) {
+  state.mode = mode;
+  const badge = document.getElementById('setup-badge');
+  const title = document.getElementById('setup-title');
+  const submitBtn = document.getElementById('setup-submit-btn');
+  const camPerm = document.getElementById('perm-cam');
+
+  badge.className = `setup-badge ${mode}`;
+  badge.textContent = mode === 'gaming' ? 'GAMING' : 'NORMAL';
+  title.textContent = mode === 'gaming' ? 'Create Game Server' : 'Create Chat Server';
+  submitBtn.className = `btn-primary ${mode}`;
+
+  if (mode === 'gaming') {
+    camPerm.classList.add('hidden');
+  } else {
+    camPerm.classList.remove('hidden');
+  }
+
+  goTo('screen-setup');
+}
+
+// ── Member count ───────────────────────────
+function changeMemberCount(delta) {
+  const el = document.getElementById('member-limit');
+  let val = parseInt(el.value) + delta;
+  val = Math.min(15, Math.max(1, val));
+  el.value = val;
+  state.memberLimit = val;
+}
+
+// ── Permissions + Create ───────────────────
+async function requestPermsAndCreate() {
+  const adminName = document.getElementById('admin-name').value.trim();
+  const serverName = document.getElementById('server-name').value.trim();
+
+  if (!adminName) { toast('Enter your name'); return; }
+  if (!serverName) { toast('Enter a server name'); return; }
+
+  state.myName = adminName;
+  state.serverName = serverName;
+  state.memberLimit = parseInt(document.getElementById('member-limit').value);
+  state.isAdmin = true;
+
+  // Request mic
+  const micPerm = document.getElementById('perm-mic');
+  try {
+    state.micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    micPerm.classList.add('granted');
+  } catch(e) {
+    micPerm.classList.add('denied');
+  }
+
+  // Request camera (normal mode only)
+  if (state.mode === 'normal') {
+    const camPerm = document.getElementById('perm-cam');
+    try {
+      state.camStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      camPerm.classList.add('granted');
+    } catch(e) {
+      camPerm.classList.add('denied');
+    }
+  }
+
+  // Overlay perm info
+  document.getElementById('perm-overlay').classList.add('granted');
+
+  await createRoom();
+}
+
+// ── Create Firebase Room ───────────────────
+async function createRoom() {
+  const { ref, push, set, onValue } = dbFns;
+  const roomRef = push(ref(db, 'rooms'));
+  state.roomId = roomRef.key;
+  state.myKey = 'admin';
+
+  await set(roomRef, {
+    serverName: state.serverName,
+    mode: state.mode,
+    memberLimit: state.memberLimit,
+    adminName: state.myName,
+    started: false,
+    createdAt: Date.now()
+  });
+
+  // Add admin as member
+  await set(ref(db, `rooms/${state.roomId}/members/admin`), {
+    name: state.myName,
+    isAdmin: true,
+    joinedAt: Date.now()
+  });
+
+  // Cleanup on disconnect
+  const memberRef = ref(db, `rooms/${state.roomId}/members/admin`);
+  dbFns.onDisconnect(memberRef).remove();
+
+  const link = `${location.origin}${location.pathname}?room=${state.roomId}`;
+
+  if (state.mode === 'normal') {
+    document.getElementById('lobby-server-name').textContent = state.serverName;
+    document.getElementById('lobby-link').textContent = link;
+    document.getElementById('lobby-member-badge').textContent = `1 / ${state.memberLimit}`;
+    goTo('screen-lobby');
+    listenMembers('lobby');
+  } else {
+    document.getElementById('gaming-lobby-name').textContent = state.serverName;
+    document.getElementById('gaming-lobby-link').textContent = link;
+    document.getElementById('gaming-member-badge').textContent = `1 / ${state.memberLimit}`;
+    goTo('screen-gaming-lobby');
+    listenMembers('gaming-lobby');
+  }
+}
+
+// ── Listen to members ──────────────────────
+function listenMembers(lobbyType) {
+  const { ref, onValue } = dbFns;
+  onValue(ref(db, `rooms/${state.roomId}/members`), snap => {
+    if (!snap.exists()) return;
+    const members = snap.val();
+    state.members = members;
+    renderMembers(members, lobbyType);
+  });
+
+  // Listen for session start (for members)
+  if (!state.isAdmin) {
+    onValue(ref(db, `rooms/${state.roomId}/started`), snap => {
+      if (snap.val() === true) {
+        if (state.mode === 'normal') {
+          openChat();
+        } else {
+          openGamingOverlay();
+        }
+      }
+    });
+  }
+}
+
+function renderMembers(members, container) {
+  const listEl = document.getElementById(
+    container === 'lobby' ? 'lobby-member-list' : 
+    container === 'gaming-lobby' ? 'gaming-member-list' : 'lobby-member-list'
+  );
+  if (!listEl) return;
+
+  const count = Object.keys(members).length;
+  const badgeEl = document.getElementById(
+    container === 'lobby' ? 'lobby-member-badge' : 'gaming-member-badge'
+  );
+  if (badgeEl) badgeEl.textContent = `${count} / ${state.memberLimit}`;
+
+  listEl.innerHTML = '';
+  Object.values(members).forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'member-item';
+    div.innerHTML = `
+      <div class="member-avatar">${m.name[0].toUpperCase()}</div>
+      <div class="member-name">${m.name}</div>
+      <div class="member-tag ${m.isAdmin ? 'admin' : ''}">${m.isAdmin ? 'HOST' : 'MEMBER'}</div>
+    `;
+    listEl.appendChild(div);
+  });
+}
+
+// ── Start Chat (Admin) ─────────────────────
+async function startChat() {
+  const { ref, update } = dbFns;
+  await update(ref(db, `rooms/${state.roomId}`), { started: true });
+  state.started = true;
+  openChat();
+}
+
+function openChat() {
+  state.started = true;
+  document.getElementById('chat-room-name').textContent = state.serverName || 'Chat';
+  document.getElementById('chat-avatar-icon').textContent = (state.serverName || 'C')[0].toUpperCase();
+  goTo('screen-chat');
+  listenChat();
+  updateOnlineStatus();
+}
+
+// ── Chat messages ──────────────────────────
+function listenChat() {
+  const { ref, onValue } = dbFns;
+  onValue(ref(db, `rooms/${state.roomId}/messages`), snap => {
+    const container = document.getElementById('chat-messages');
+    container.innerHTML = '';
+    if (!snap.exists()) return;
+    const msgs = snap.val();
+    Object.values(msgs).forEach(msg => renderMessage(msg));
+    container.scrollTop = container.scrollHeight;
+  });
+}
+
+function renderMessage(msg) {
+  const container = document.getElementById('chat-messages');
+  if (!container) return;
+
+  if (msg.system) {
+    const div = document.createElement('div');
+    div.className = 'system-msg';
+    div.textContent = msg.text;
+    container.appendChild(div);
+    return;
+  }
+
+  const isMine = msg.sender === state.myName;
+  const group = document.createElement('div');
+  group.className = `msg-group ${isMine ? 'mine' : 'theirs'}`;
+
+  const time = new Date(msg.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  group.innerHTML = `
+    ${!isMine ? `<div class="msg-sender">${msg.sender}</div>` : ''}
+    <div class="msg-bubble">${escHtml(msg.text)}</div>
+    <div class="msg-time">${time}</div>
+  `;
+  container.appendChild(group);
+}
+
+function escHtml(str) {
+  const div = document.createElement('div');
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  input.style.height = 'auto';
+
+  const { ref, push } = dbFns;
+  await push(ref(db, `rooms/${state.roomId}/messages`), {
+    sender: state.myName,
+    text: text,
+    ts: Date.now()
+  });
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ── Voice call toggle (simple mic share) ───
+function toggleVoiceCall() {
+  const btn = document.getElementById('btn-voice-call');
+  state.voiceCallActive = !state.voiceCallActive;
+  btn.classList.toggle('active', state.voiceCallActive);
+  if (state.voiceCallActive) {
+    toast('Voice call started — mic enabled');
+  } else {
+    toast('Voice call ended');
+  }
+}
+
+function updateOnlineStatus() {
+  const { ref, onValue } = dbFns;
+  onValue(ref(db, `rooms/${state.roomId}/members`), snap => {
+    if (!snap.exists()) return;
+    const count = Object.keys(snap.val()).length;
+    document.getElementById('chat-online-status').textContent = `● ${count} ONLINE`;
+  });
+}
+
+// ── Video call ─────────────────────────────
+function openVideoCall() {
+  document.getElementById('video-overlay').classList.add('active');
+  setupLocalVideo();
+}
+
+async function setupLocalVideo() {
+  const grid = document.getElementById('video-grid');
+  grid.innerHTML = '';
+  try {
+    const stream = state.camStream || await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    state.camStream = stream;
+    const tile = createVideoTile(stream, state.myName + ' (You)', true);
+    grid.appendChild(tile);
+  } catch(e) {
+    const tile = createNoVideoTile(state.myName + ' (You)');
+    grid.appendChild(tile);
+  }
+}
+
+function createVideoTile(stream, name, muted) {
+  const tile = document.createElement('div');
+  tile.className = 'video-tile';
+  const vid = document.createElement('video');
+  vid.srcObject = stream;
+  vid.autoplay = true;
+  vid.playsInline = true;
+  if (muted) vid.muted = true;
+  tile.appendChild(vid);
+  const label = document.createElement('div');
+  label.className = 'video-tile-name';
+  label.textContent = name;
+  tile.appendChild(label);
+  return tile;
+}
+
+function createNoVideoTile(name) {
+  const tile = document.createElement('div');
+  tile.className = 'video-tile';
+  tile.innerHTML = `
+    <div class="video-no-cam">
+      <div class="video-no-cam-avatar">${name[0].toUpperCase()}</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2)">${name}</div>
+    </div>
+    <div class="video-tile-name">${name}</div>
+  `;
+  return tile;
+}
+
+function toggleVideoMic() {
+  const btn = document.getElementById('vid-mic-btn');
+  state.micActive = !state.micActive;
+  btn.classList.toggle('active', !state.micActive);
+  if (state.camStream) {
+    state.camStream.getAudioTracks().forEach(t => t.enabled = !state.micActive);
+  }
+}
+
+function toggleVideoCam() {
+  const btn = document.getElementById('vid-cam-btn');
+  state.camActive = !state.camActive;
+  btn.classList.toggle('active', !state.camActive);
+  if (state.camStream) {
+    state.camStream.getVideoTracks().forEach(t => t.enabled = !state.camActive);
+  }
+}
+
+function endVideoCall() {
+  document.getElementById('video-overlay').classList.remove('active');
+  document.getElementById('btn-video-call').classList.remove('active');
+}
+
+// ── Gaming Mode ────────────────────────────
+async function startGamingOverlay() {
+  const { ref, update } = dbFns;
+  await update(ref(db, `rooms/${state.roomId}`), { started: true });
+  state.started = true;
+  openGamingOverlay();
+}
+
+function openGamingOverlay() {
+  goTo('screen-home'); // minimize behind
+  document.getElementById('screen-home').style.display = 'none';
+  document.getElementById('gaming-overlay').classList.add('active');
+  listenOverlayChat();
+  makeDraggable();
+}
+
+function listenOverlayChat() {
+  const { ref, onValue } = dbFns;
+  onValue(ref(db, `rooms/${state.roomId}/messages`), snap => {
+    const container = document.getElementById('overlay-messages');
+    container.innerHTML = '';
+    if (!snap.exists()) return;
+    Object.values(snap.val()).forEach(msg => {
+      if (msg.system) return;
+      const isMine = msg.sender === state.myName;
+      const div = document.createElement('div');
+      div.className = `overlay-msg ${isMine ? 'mine' : ''}`;
+      div.innerHTML = `<span class="sender">${msg.sender}</span> <span class="text">${escHtml(msg.text)}</span>`;
+      container.appendChild(div);
+    });
+    container.scrollTop = container.scrollHeight;
+  });
+}
+
+async function sendOverlayMessage() {
+  const input = document.getElementById('overlay-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const { ref, push } = dbFns;
+  await push(ref(db, `rooms/${state.roomId}/messages`), {
+    sender: state.myName,
+    text: text,
+    ts: Date.now()
+  });
+}
+
+function handleOverlayKey(e) {
+  if (e.key === 'Enter') sendOverlayMessage();
+}
+
+// ── PTT (Push-To-Talk) ─────────────────────
+function startPTT() {
+  const btn = document.getElementById('ptt-btn');
+  btn.classList.add('talking');
+  btn.textContent = '🔴 TALKING...';
+  if (state.micStream) {
+    state.micStream.getAudioTracks().forEach(t => t.enabled = true);
+  } else {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+      state.micStream = stream;
+    });
+  }
+}
+
+function stopPTT() {
+  const btn = document.getElementById('ptt-btn');
+  btn.classList.remove('talking');
+  btn.innerHTML = '🎙️ HOLD TO TALK';
+  if (state.micStream) {
+    state.micStream.getAudioTracks().forEach(t => t.enabled = false);
+  }
+}
+
+// ── Join Room ──────────────────────────────
+async function joinRoom() {
+  const name = document.getElementById('join-name').value.trim();
+  if (!name) { toast('Enter your name'); return; }
+  state.myName = name;
+
+  const { ref, push, onDisconnect } = dbFns;
+  const memberRef = push(ref(db, `rooms/${state.roomId}/members`));
+  state.myKey = memberRef.key;
+
+  await dbFns.set(memberRef, {
+    name: name,
+    isAdmin: false,
+    joinedAt: Date.now()
+  });
+
+  dbFns.onDisconnect(memberRef).remove();
+
+  // Request perms
+  try {
+    state.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    document.getElementById('join-perm-mic').classList.add('granted');
+  } catch(e) {
+    document.getElementById('join-perm-mic').classList.add('denied');
+  }
+
+  if (state.mode === 'normal') {
+    try {
+      state.camStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      document.getElementById('join-perm-cam').classList.add('granted');
+    } catch(e) {
+      document.getElementById('join-perm-cam').classList.add('denied');
+    }
+  }
+
+  document.getElementById('join-status').textContent = 'WAITING FOR HOST TO START...';
+  document.getElementById('join-btn').disabled = true;
+
+  listenMembers('lobby');
+}
+
+// ── Draggable overlay ──────────────────────
+function makeDraggable() {
+  const el = document.getElementById('gaming-overlay');
+  const handle = document.getElementById('overlay-handle');
+  let startX, startY, startLeft, startTop;
+
+  handle.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    startX = t.clientX; startY = t.clientY;
+    const rect = el.getBoundingClientRect();
+    startLeft = rect.left; startTop = rect.top;
+    e.preventDefault();
+  }, { passive: false });
+
+  handle.addEventListener('touchmove', e => {
+    const t = e.touches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    el.style.left = Math.max(0, Math.min(window.innerWidth - 280, startLeft + dx)) + 'px';
+    el.style.top = Math.max(0, Math.min(window.innerHeight - 300, startTop + dy)) + 'px';
+    el.style.right = 'auto';
+    e.preventDefault();
+  }, { passive: false });
+
+  handle.addEventListener('mousedown', e => {
+    startX = e.clientX; startY = e.clientY;
+    const rect = el.getBoundingClientRect();
+    startLeft = rect.left; startTop = rect.top;
+
+    const onMove = e => {
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      el.style.left = Math.max(0, Math.min(window.innerWidth - 280, startLeft + dx)) + 'px';
+      el.style.top = Math.max(0, Math.min(window.innerHeight - 300, startTop + dy)) + 'px';
+      el.style.right = 'auto';
+    };
+
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+}
+
+// ── Copy link ──────────────────────────────
+function copyLink(gaming = false) {
+  const link = gaming
+    ? document.getElementById('gaming-lobby-link').textContent
+    : document.getElementById('lobby-link').textContent;
+  navigator.clipboard.writeText(link).then(() => toast('Link copied'));
+}
+
+// ── Toast ──────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ── Init ───────────────────────────────────
+initFirebase();
+</script>
+</body>
+</html>
